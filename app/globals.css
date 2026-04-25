@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   JOHNSON'S JERKY — Global Styles
+   Far West texan × Outback australien
+   ============================================================ */
+
+:root {
+  --terra: #B85C38;
+  --dark-terra: #8B3A1F;
+  --sand: #E8D5B7;
+  --parchment: #F5E6D3;
+  --leather: #3E2723;
+  --dark-leather: #5D4037;
+  --gold: #C9A961;
+  --charcoal: #1A1A1A;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-parchment text-charcoal font-body;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238B3A1F' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* Scrollbar western */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--leather); }
+  ::-webkit-scrollbar-thumb { background: var(--terra); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dark-terra); }
+
+  /* Sélection de texte */
+  ::selection { background: var(--gold); color: var(--leather); }
+}
+
+@layer components {
+  /* ---- Carte "Wanted Poster" ---- */
+  .wanted-card {
+    position: relative;
+    background-color: var(--parchment);
+    background-image:
+      url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%238B3A1F' fill-opacity='0.04' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+    border: 3px solid var(--leather);
+    box-shadow:
+      inset 0 0 0 4px var(--parchment),
+      inset 0 0 0 6px var(--dark-terra),
+      4px 4px 0 var(--dark-leather),
+      6px 6px 20px rgba(62,39,35,0.3);
+    padding: 1rem;
+  }
+
+  .wanted-card::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid var(--dark-terra);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Coins décoratifs du wanted poster */
+  .wanted-card::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 1.5px solid var(--gold);
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ---- Titre Western avec ombre */
+  .text-western-shadow {
+    text-shadow:
+      2px 2px 0 var(--dark-terra),
+      4px 4px 0 rgba(62,39,35,0.5),
+      0 0 30px rgba(201,169,97,0.3);
+  }
+
+  .text-western-shadow-light {
+    text-shadow:
+      1px 1px 0 rgba(62,39,35,0.8),
+      3px 3px 8px rgba(0,0,0,0.4);
+  }
+
+  /* ---- Séparateur western ---- */
+  .divider-western {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--gold);
+  }
+  .divider-western::before,
+  .divider-western::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+
+  /* ---- Section parchemin ---- */
+  .section-parchment {
+    background-color: var(--parchment);
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 28px,
+        rgba(139,58,31,0.04) 28px,
+        rgba(139,58,31,0.04) 29px
+      );
+  }
+
+  /* ---- Section sombre cuir ---- */
+  .section-leather {
+    background-color: var(--leather);
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 20px,
+        rgba(93,64,55,0.3) 20px,
+        rgba(93,64,55,0.3) 21px
+      );
+  }
+
+  /* ---- Bouton western stamp ---- */
+  .btn-stamp {
+    @apply font-body font-bold uppercase tracking-widest;
+    background: var(--terra);
+    color: var(--parchment);
+    border: 2px solid var(--dark-terra);
+    box-shadow: 3px 3px 0 var(--dark-terra);
+    transition: all 0.1s ease;
+  }
+  .btn-stamp:hover {
+    background: var(--dark-terra);
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0 var(--dark-terra);
+  }
+  .btn-stamp:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+  }
+
+  /* ---- Badge "WANTED" style ---- */
+  .wanted-badge {
+    @apply font-western text-xs tracking-[0.3em] uppercase;
+    color: var(--dark-terra);
+    letter-spacing: 0.3em;
+  }
+
+  /* ---- Input western ---- */
+  .input-western {
+    @apply font-body bg-parchment border-2 border-leather/30 px-4 py-3 text-charcoal;
+    @apply focus:outline-none focus:border-terra focus:bg-white transition-colors;
+  }
+}
+
+@layer utilities {
+  /* Poussière flottante (hero decoration) */
+  .dust-particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: rgba(201, 169, 97, 0.4);
+    border-radius: 50%;
+  }
+
+  /* Bordure western en double trait */
+  .border-western {
+    border: 2px double var(--leather);
+    outline: 4px solid transparent;
+    outline-offset: 2px;
+  }
+
+  /* Gradient de section */
+  .gradient-sunset {
+    background: linear-gradient(
+      to bottom,
+      #FF6B35 0%,
+      #C4622E 15%,
+      #B85C38 30%,
+      #8B3A1F 55%,
+      #5A1E0A 75%,
+      #3E2723 100%
+    );
+  }
+
+  /* Effet vignette sur les images */
+  .vignette {
+    box-shadow: inset 0 0 80px rgba(62,39,35,0.6);
+  }
+
+  /* Opacité parchemin */
+  .bg-parchment-overlay {
+    background: rgba(245, 230, 211, 0.92);
+  }
+}
+
+/* ---- Animations poussière ---- */
+@keyframes dustRise {
+  0% { transform: translate(0, 0) scale(1); opacity: 0; }
+  15% { opacity: 0.5; }
+  85% { opacity: 0.2; }
+  100% { transform: translate(var(--dx, 40px), -90px) scale(0.5); opacity: 0; }
+}
+
+.animate-dust-1 { animation: dustRise 5s ease-out infinite; --dx: 30px; animation-delay: 0s; }
+.animate-dust-2 { animation: dustRise 7s ease-out infinite; --dx: -20px; animation-delay: 1.5s; }
+.animate-dust-3 { animation: dustRise 6s ease-out infinite; --dx: 50px; animation-delay: 3s; }
+.animate-dust-4 { animation: dustRise 8s ease-out infinite; --dx: -40px; animation-delay: 0.8s; }
+.animate-dust-5 { animation: dustRise 4.5s ease-out infinite; --dx: 20px; animation-delay: 2.2s; }
