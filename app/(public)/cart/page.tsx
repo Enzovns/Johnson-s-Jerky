@@ -27,8 +27,8 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen section-parchment">
-      <div className="bg-leather py-12 text-center">
+    <div className="min-h-screen w-full section-parchment">
+      <div className="w-full bg-leather py-12 text-center">
         <h1 className="font-western text-5xl text-gold text-western-shadow-light">Your Wagon</h1>
         <p className="font-body text-sand/50 text-sm mt-2 tracking-widest uppercase">
           {itemCount} item{itemCount !== 1 ? 's' : ''}
