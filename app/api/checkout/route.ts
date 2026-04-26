@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import { isValidDeliveryPostcode } from '@/lib/utils/postcodes'
 
 interface CheckoutBody {
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     // Vérifier les produits en base et récupérer les vrais prix
     const productIds = items.map(i => i.product_id)
-    const { data: products, error: productError } = await supabaseAdmin
+    const { data: products, error: productError } = await getSupabaseAdmin()
       .from('products')
       .select('id, name, price_cents, stock')
       .in('id', productIds)
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const totalCents = subtotalCents + shipping_cost_cents
 
     // Créer la commande en base (statut pending)
-    const { data: order, error: orderError } = await supabaseAdmin
+    const { data: order, error: orderError } = await getSupabaseAdmin()
       .from('orders')
       .insert({
         customer_name: customer.name,
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Créer les order_items
-    await supabaseAdmin.from('order_items').insert(
+    await getSupabaseAdmin().from('order_items').insert(
       verifiedItems.map(item => ({
         order_id: order.id,
         product_id: item.product_id,
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     // Décrémenter le stock
     for (const item of verifiedItems) {
-      await supabaseAdmin.rpc('decrement_stock', { product_id: item.product_id, qty: item.quantity })
+      await getSupabaseAdmin().rpc('decrement_stock', { product_id: item.product_id, qty: item.quantity })
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Sauvegarder le session ID Stripe sur la commande
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('orders')
       .update({ stripe_session_id: session.id })
       .eq('id', order.id)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe/client'
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getSupabaseAdmin } from '@/lib/supabase/admin'
 import Stripe from 'stripe'
 
 // Important : désactiver le body parsing de Next.js pour lire le raw body (nécessaire pour vérifier la signature Stripe)
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
       if (!orderId) break
 
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('orders')
         .update({
           payment_status: 'paid',
@@ -48,20 +48,20 @@ export async function POST(req: NextRequest) {
       if (!orderId) break
 
       // Marquer comme échoué et remettre le stock
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('orders')
         .update({ payment_status: 'failed' })
         .eq('id', orderId)
 
       // Récupérer et remettre le stock
-      const { data: orderItems } = await supabaseAdmin
+      const { data: orderItems } = await getSupabaseAdmin()
         .from('order_items')
         .select('product_id, quantity')
         .eq('order_id', orderId)
 
       if (orderItems) {
         for (const item of orderItems) {
-          await supabaseAdmin.rpc('increment_stock', { product_id: item.product_id, qty: item.quantity })
+          await getSupabaseAdmin().rpc('increment_stock', { product_id: item.product_id, qty: item.quantity })
         }
       }
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     case 'payment_intent.payment_failed': {
       const pi = event.data.object as Stripe.PaymentIntent
       if (pi.metadata?.order_id) {
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('orders')
           .update({ payment_status: 'failed' })
           .eq('id', pi.metadata.order_id)
