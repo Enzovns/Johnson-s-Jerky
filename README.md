@@ -1,263 +1,168 @@
-# 🤠 Johnson's Jerky — E-Commerce Site
+# Johnson's Jerky — E-Commerce Site
 
-Premium beef jerky & biltong shop. Far West texan × Outback australien.
-Built with **Next.js 14 + TypeScript + Tailwind CSS + Supabase + Stripe**.
-
----
-
-## Stack technique
-
-| Technologie | Rôle |
-|---|---|
-| **Next.js 14** (App Router) | Framework React, SSR, routing |
-| **TypeScript** | Types, maintenabilité |
-| **Tailwind CSS** | Styles utilitaires + thème western |
-| **Supabase** | PostgreSQL + Auth + Storage |
-| **Stripe Checkout** | Paiements sécurisés (hébergé par Stripe) |
-| **Vercel** | Déploiement recommandé |
+Premium beef jerky & biltong from Kalgoorlie, WA. Built with Next.js 14 + Airtable as the product CMS.
 
 ---
 
-## Installation rapide
+## Tech Stack
+
+- **Framework:** Next.js 14 (App Router, TypeScript)
+- **Styling:** Tailwind CSS (custom western/outback theme)
+- **Product CMS:** Airtable (owner manages products without touching code)
+- **Payments:** Stripe Payment Links (one link per product, set in Airtable)
+- **Hosting:** Vercel
+
+---
+
+## Airtable Setup
+
+### 1. Create an Airtable account
+
+Go to [airtable.com](https://airtable.com) and sign up for a free account.
+
+### 2. Create a new Base
+
+- Click **Add a base** → **Start from scratch**
+- Name it something like `Johnsons Jerky`
+
+### 3. Create the Products table
+
+Inside your base, rename the default table to `Products` (must match `AIRTABLE_PRODUCTS_TABLE` exactly).
+
+Add these columns with **exactly** these field names:
+
+| Field name             | Field type          | Notes                                              |
+|------------------------|---------------------|----------------------------------------------------|
+| `name`                 | Single line text    | Product name                                       |
+| `description`          | Long text           | Product description                                |
+| `price`                | Number (decimal)    | Price in **dollars** (e.g. `18.00` for $18)        |
+| `image`                | Attachment          | Upload product photo — first attachment is used    |
+| `category`             | Single line text    | e.g. `Jerky`, `Biltong`                            |
+| `available`            | Checkbox            | Unchecked = sold out / hidden from buy button      |
+| `stripe_payment_link`  | URL                 | Stripe Payment Link URL for this product           |
+
+> Field names are **case-sensitive**. Use lowercase with underscores exactly as shown.
+
+### 4. Add your products
+
+Click **+** to add a row for each product. Fill in all fields. For `image`, click the cell and upload a photo.
+
+### 5. Get your API credentials
+
+**Personal Access Token:**
+1. Go to [airtable.com/create/tokens](https://airtable.com/create/tokens)
+2. Click **Create new token**
+3. Name: `johnsons-jerky-site`
+4. Scopes: add `data.records:read`
+5. Access: select your base → **Add a base**
+6. Click **Create token** and copy it
+
+**Base ID:**
+- Open your base in the browser
+- The URL looks like `https://airtable.com/appXXXXXXXXXXXXXX/...`
+- Copy the `appXXXXXXXXXXXXXX` part
+
+---
+
+## Stripe Payment Links Setup
+
+For each product, create a Stripe Payment Link:
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com) → **Payment Links**
+2. Click **New** → select or create the product → set the price
+3. Copy the generated URL (e.g. `https://buy.stripe.com/XXXXXXXX`)
+4. Paste it into the `stripe_payment_link` field in Airtable for that product
+
+When a customer clicks "Order Now", they go directly to that Stripe-hosted payment page.
+
+---
+
+## Managing Products (Owner Guide)
+
+Everything is done in Airtable — no code changes needed.
+
+| Task | What to do |
+|------|-----------|
+| **Add a product** | Click `+` at the bottom of the Products table, fill in all fields |
+| **Edit name/price/description** | Click the cell and type |
+| **Change photo** | Click the image cell → remove old → upload new |
+| **Mark as sold out** | Uncheck the `available` checkbox |
+| **Bring back in stock** | Check the `available` checkbox |
+| **Remove from site** | Uncheck `available` or delete the row |
+| **Update buy link** | Paste new Stripe Payment Link into `stripe_payment_link` |
+
+Changes appear on the website within **60 seconds** (the site caches Airtable data for 1 minute).
+
+---
+
+## Environment Variables
+
+### Local development
+
+Copy `.env.example` to `.env.local`:
 
 ```bash
-# 1. Cloner le repo
-git clone <url-du-repo>
-cd johnsons-jerky
-
-# 2. Installer les dépendances
-npm install
-
-# 3. Configurer les variables d'environnement
 cp .env.example .env.local
-# Remplir les valeurs dans .env.local (voir section Variables d'env ci-dessous)
-
-# 4. Lancer en développement
-npm run dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000)
-
----
-
-## Variables d'environnement
-
-Copier `.env.example` en `.env.local` et remplir :
+Fill in:
 
 ```env
-# Supabase (trouvées dans Project Settings > API)
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-
-# Stripe (Dashboard > Developers > API Keys)
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-
-# App
+AIRTABLE_API_KEY=patXXXXXXXXXXXXXX.XXXXXXXX...
+AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
+AIRTABLE_PRODUCTS_TABLE=Products
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
----
+### Vercel (production)
 
-## Configuration Supabase
+In your Vercel project → **Settings** → **Environment Variables**, add:
 
-### 1. Créer un projet Supabase
+| Variable | Value |
+|----------|-------|
+| `AIRTABLE_API_KEY` | Your personal access token |
+| `AIRTABLE_BASE_ID` | Your base ID (`appXXXX...`) |
+| `AIRTABLE_PRODUCTS_TABLE` | `Products` (or your table name) |
+| `NEXT_PUBLIC_APP_URL` | Your production URL e.g. `https://johnsonsjerkykalgoorlie.com.au` |
 
-1. Aller sur [supabase.com](https://supabase.com) → New Project
-2. Noter l'URL et les clés API (Project Settings > API)
-
-### 2. Lancer la migration SQL
-
-1. Dans le Dashboard Supabase : **SQL Editor** → **New Query**
-2. Copier-coller le contenu de `supabase/migrations/001_initial.sql`
-3. Cliquer **Run**
-
-Cela crée toutes les tables, active RLS, seed les produits exemples et les tarifs de livraison.
-
-### 3. Créer le compte admin
-
-Dans le SQL Editor Supabase, aller dans **Authentication > Users** :
-
-1. Cliquer **+ Add user**
-2. Renseigner email et mot de passe
-3. Ce compte est le seul qui peut accéder à `/admin`
-
-> **Sécurité** : il n'y a pas d'inscription publique. Pour changer le mot de passe : Authentication > Users > Edit.
+> `AIRTABLE_API_KEY` is a **server-only** variable (no `NEXT_PUBLIC_` prefix) — it is never exposed to the browser.
 
 ---
 
-## Configuration Stripe
-
-### 1. Récupérer les clés API
-
-Dashboard Stripe → **Developers** → **API Keys**
-- Copier la **Publishable key** (`pk_test_...`) → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- Copier la **Secret key** (`sk_test_...`) → `STRIPE_SECRET_KEY`
-
-### 2. Configurer le webhook
-
-Pour que le statut de commande soit mis à jour après paiement :
-
-**En développement (local) :**
-```bash
-# Installer la CLI Stripe
-npm install -g stripe
-
-# Écouter les webhooks en local
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-# Copier le webhook secret affiché (whsec_...) → STRIPE_WEBHOOK_SECRET
-```
-
-**En production (Vercel) :**
-1. Stripe Dashboard → **Developers** → **Webhooks** → **Add endpoint**
-2. URL : `https://votre-domaine.vercel.app/api/webhooks/stripe`
-3. Événements à écouter :
-   - `checkout.session.completed`
-   - `checkout.session.expired`
-   - `payment_intent.payment_failed`
-4. Copier le **Signing secret** → `STRIPE_WEBHOOK_SECRET`
-
----
-
-## Lancer en développement
+## Local Development
 
 ```bash
+npm install
+cp .env.example .env.local
+# fill in .env.local with real Airtable credentials
 npm run dev
 ```
 
-- Site public : [http://localhost:3000](http://localhost:3000)
-- Admin : [http://localhost:3000/admin](http://localhost:3000/admin)
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Déploiement sur Vercel (recommandé)
+## Deploying to Vercel
 
-```bash
-# Installer Vercel CLI
-npm install -g vercel
+1. Push this repo to GitHub
+2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import your repo
+3. Add all environment variables (see table above)
+4. Click **Deploy**
 
-# Déployer
-vercel
-```
-
-Ou connecter le repo GitHub directement dans le dashboard Vercel.
-
-**Variables d'environnement sur Vercel :**
-Aller dans le projet Vercel → **Settings** → **Environment Variables** → ajouter toutes les variables de `.env.local` (sauf `NEXT_PUBLIC_APP_URL` qui sera l'URL de production).
+Every `git push` to `main` triggers an automatic redeploy.
 
 ---
 
-## Structure des fichiers
+## How the Site Works
 
 ```
-/
-├── app/
-│   ├── (public)/              # Routes publiques
-│   │   ├── page.tsx           # Home
-│   │   ├── products/          # Catalogue + page produit
-│   │   ├── cart/              # Panier
-│   │   ├── checkout/          # Formulaire de commande
-│   │   └── confirmation/      # Confirmation après paiement
-│   ├── admin/                 # Dashboard admin (protégé)
-│   │   ├── login/             # Connexion admin
-│   │   ├── products/          # CRUD produits
-│   │   ├── orders/            # Tableau des commandes
-│   │   └── settings/          # Frais de livraison + contenu
-│   └── api/
-│       ├── checkout/          # Création session Stripe
-│       ├── shipping-rates/    # Tarifs de livraison
-│       └── webhooks/stripe/   # Webhook Stripe
-├── components/
-│   ├── ui/                    # Button, Input, Badge
-│   ├── decorations/           # SVG western (kangaroo, headframe, guitare, étoile)
-│   ├── layout/                # Header, Footer, AdminNav
-│   ├── cart/                  # CartProvider (localStorage)
-│   └── products/              # AddToCartButton, QuantitySelector
-├── lib/
-│   ├── supabase/              # Clients Supabase (browser, server, admin)
-│   ├── stripe/                # Client Stripe
-│   └── utils/                 # Formatage, validation postcodes
-├── public/
-│   └── logo.png               # ← REMPLACER par le vrai logo
-├── supabase/
-│   └── migrations/
-│       └── 001_initial.sql    # Schéma complet + seed
-└── .env.example               # Variables d'environnement à configurer
+Airtable (products CMS)
+        ↓  every 60 seconds
+/api/products  (server-side API route — key never reaches browser)
+        ↓
+Homepage + /products pages  (Next.js server components)
+        ↓  "Order Now" button
+Stripe Payment Link  (Stripe-hosted checkout)
 ```
 
----
-
-## Remplacer le logo
-
-1. Créer un logo au format PNG (transparent de préférence), taille recommandée 200×200px
-2. Remplacer `public/logo.png` par votre fichier
-3. Les `<!-- LOGO PLACEHOLDER -->` dans le code sont dans `components/layout/Header.tsx`
-
----
-
-## Zone de livraison (postcodes)
-
-Par défaut, les commandes sont acceptées pour les codes postaux :
-
-| Postcode | Localité |
-|---|---|
-| 6430 | Kalgoorlie |
-| 6431 | Boulder |
-| 6432 | Kambalda |
-| 6433 | Norseman |
-| 6434 | Widgiemooltha |
-| 6435 | Coolgardie |
-| 6436 | Leonora |
-| 6437 | Laverton |
-| 6438 | Leinster |
-
-Pour modifier la zone : `lib/utils/postcodes.ts`
-
----
-
-## Palette de couleurs
-
-| Nom | Hex | Usage |
-|---|---|---|
-| Terra cotta | `#B85C38` | Boutons principaux, accents |
-| Dark terra | `#8B3A1F` | Ombres, bordures |
-| Sand | `#E8D5B7` | Textes clairs |
-| Parchment | `#F5E6D3` | Fond cartes produits |
-| Leather | `#3E2723` | Header, footer, fond sombre |
-| Dark leather | `#5D4037` | Nuances cuir |
-| Gold | `#C9A961` | Titres, accents western |
-| Charcoal | `#1A1A1A` | Textes principaux |
-
----
-
-## Fonts Google
-
-- **Titres** : [Rye](https://fonts.google.com/specimen/Rye) — style western/wanted poster
-- **Corps** : [Special Elite](https://fonts.google.com/specimen/Special+Elite) — machine à écrire rustique
-
-Chargées via `next/font/google` dans `app/layout.tsx` (pas d'impact sur les performances).
-
----
-
-## Questions fréquentes
-
-**Comment changer le prix d'un produit ?**
-Admin → Products → Edit → modifier le prix → Save.
-
-**Comment changer les frais de livraison ?**
-Admin → Settings → Shipping Rates → modifier → Save.
-
-**Comment voir les commandes ?**
-Admin → Orders → tableau complet avec statuts.
-
-**Comment marquer une commande comme expédiée ?**
-Admin → Orders → bouton "Mark Shipped" sur la ligne de commande.
-
-**Stripe prend combien ?**
-En mode test (`pk_test_...`), les paiements sont fictifs. Passer en mode live nécessite de créer un compte Stripe vérifié et de remplacer les clés test par les clés live.
-
----
-
-*Built with ❤️ for Johnson's Jerky, Kalgoorlie WA*
+The Airtable API key lives only on the server. Pages cache product data for 60 seconds (`revalidate: 60`) so changes propagate quickly without hammering the Airtable API.

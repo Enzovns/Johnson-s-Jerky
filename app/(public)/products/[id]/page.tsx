@@ -1,32 +1,16 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { fetchProductById } from '@/lib/airtable/client'
 import { formatPrice } from '@/lib/utils/format'
 import { SheriffStarIcon } from '@/components/decorations'
-import QuantityAddToCart from '@/components/products/QuantityAddToCart'
-import type { Product } from '@/lib/supabase/types'
 
 interface Props {
   params: { id: string }
 }
 
-async function getProduct(id: string): Promise<Product | null> {
-  try {
-    const supabase = createSupabaseServer()
-    const { data } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .single()
-    return data
-  } catch {
-    return null
-  }
-}
-
 export async function generateMetadata({ params }: Props) {
-  const product = await getProduct(params.id)
+  const product = await fetchProductById(params.id)
   if (!product) return { title: 'Product Not Found' }
   return {
     title: `${product.name} — Johnson's Jerky`,
@@ -35,8 +19,10 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function ProductDetailPage({ params }: Props) {
-  const product = await getProduct(params.id)
+  const product = await fetchProductById(params.id)
   if (!product) notFound()
+
+  const soldOut = !product.available
 
   return (
     <div className="min-h-screen section-parchment">
@@ -62,7 +48,6 @@ export default async function ProductDetailPage({ params }: Props) {
               ★ WANTED ★
             </p>
             <div className="relative aspect-square overflow-hidden bg-sand/30">
-              {/* À remplacer par photo réelle */}
               <Image
                 src={product.image_url || `https://placehold.co/600x600/B85C38/F5E6D3?text=${encodeURIComponent(product.name)}`}
                 alt={product.name}
@@ -71,7 +56,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 priority
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
-              {product.stock <= 0 && (
+              {soldOut && (
                 <div className="absolute inset-0 bg-leather/60 flex items-center justify-center">
                   <span className="font-western text-3xl text-parchment transform -rotate-12 border-4 border-parchment px-6 py-3">
                     SOLD OUT
@@ -81,11 +66,15 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Détails */}
+          {/* Details */}
           <div className="py-2">
             <p className="wanted-badge text-terra block mb-2 tracking-[0.3em]">
               — Johnson&apos;s Jerky —
             </p>
+
+            {product.category && (
+              <p className="font-body text-xs text-terra/70 uppercase tracking-widest mb-2">{product.category}</p>
+            )}
 
             <h1 className="font-western text-4xl md:text-5xl text-leather text-western-shadow-light leading-tight mb-4">
               {product.name}
@@ -103,29 +92,40 @@ export default async function ProductDetailPage({ params }: Props) {
               {product.description}
             </p>
 
-            {/* Stock */}
+            {/* Availability */}
             <div className="mb-6">
-              {product.stock > 5 ? (
-                <span className="font-body text-xs text-green-700 bg-green-100 border border-green-200 px-3 py-1 uppercase tracking-widest">
-                  ✓ In Stock
-                </span>
-              ) : product.stock > 0 ? (
-                <span className="font-body text-xs text-amber-700 bg-amber-100 border border-amber-200 px-3 py-1 uppercase tracking-widest">
-                  ⚡ Only {product.stock} left!
-                </span>
-              ) : (
+              {soldOut ? (
                 <span className="font-body text-xs text-red-700 bg-red-100 border border-red-200 px-3 py-1 uppercase tracking-widest">
                   ✗ Out of Stock
+                </span>
+              ) : (
+                <span className="font-body text-xs text-green-700 bg-green-100 border border-green-200 px-3 py-1 uppercase tracking-widest">
+                  ✓ In Stock
                 </span>
               )}
             </div>
 
-            {/* Quantité + panier */}
-            {product.stock > 0 && (
-              <QuantityAddToCart product={product} maxQty={product.stock} />
+            {/* Order button */}
+            {soldOut ? (
+              <button disabled className="btn-stamp w-full py-4 text-base opacity-50 cursor-not-allowed">
+                Currently Unavailable
+              </button>
+            ) : product.stripe_payment_link ? (
+              <a
+                href={product.stripe_payment_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-stamp w-full py-4 text-base text-center block hover:no-underline"
+              >
+                🤠 Order Now →
+              </a>
+            ) : (
+              <button disabled className="btn-stamp w-full py-4 text-base opacity-50 cursor-not-allowed" title="Order link not available">
+                Order Link Coming Soon
+              </button>
             )}
 
-            {/* Info livraison */}
+            {/* Delivery info */}
             <div className="mt-8 border border-terra/20 bg-terra/5 p-4">
               <p className="font-body text-xs text-dark-leather space-y-1">
                 <span className="block">🚚 <strong>Standard delivery:</strong> 3–5 business days</span>
@@ -135,7 +135,10 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
 
             <div className="mt-4 text-center">
-              <Link href="/products" className="font-body text-xs text-dark-leather/50 hover:text-terra transition-colors tracking-widest uppercase">
+              <Link
+                href="/products"
+                className="font-body text-xs text-dark-leather/50 hover:text-terra transition-colors tracking-widest uppercase"
+              >
                 ← Back to all products
               </Link>
             </div>

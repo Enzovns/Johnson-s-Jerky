@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { Rye, Special_Elite } from 'next/font/google'
 import './globals.css'
-import { CartProvider } from '@/components/cart/CartProvider'
 
 const rye = Rye({
   weight: '400',
@@ -32,9 +31,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${rye.variable} ${specialElite.variable}`}>
-      <body>
-        <CartProvider>{children}</CartProvider>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }
